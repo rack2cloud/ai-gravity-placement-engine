@@ -13,9 +13,9 @@ export interface Provider {
 export interface EngineInputs {
   datasetSizeGB: number;
   monthlyTokensMillions: number;
-  dutyCycle: number; // 0.0 to 1.0 (0% to 100%)
-  opexAdder: number; // e.g., 0.20 for 20%
-  complianceMode: boolean; // Sovereign Gate
+  dutyCycle: number;
+  opexAdder: number;
+  complianceMode: boolean;
 }
 
 export interface EngineOutput {
@@ -23,25 +23,20 @@ export interface EngineOutput {
   monthlyCompute: number;
   egressTax: number;
   totalMonthlyTCO: number;
-  tokenTCO: number; 
+  tokenTCO: number;
   gravityScore: number;
-  gravityDisplay: string; // "N/A", "0.0%*", or "XX.X%"
+  gravityDisplay: string;
   isEligible: boolean;
 }
 
-/**
- * Core Calculation Engine
- * Normalizes all providers to 8-GPU Cluster (BF16 Benchmark)
- */
 export const calculatePlacement = (inputs: EngineInputs): EngineOutput[] => {
   const { providers } = providersData;
   const HOURS_PER_MONTH = 730;
-  const GPUS_IN_CLUSTER = 8; 
+  const GPUS_IN_CLUSTER = 8;
 
   return providers.map((p: any) => {
     const provider = p as Provider;
 
-    // 1. Hard Gate: Compliance (Sovereign Mode)
     if (inputs.complianceMode && !provider.is_sovereign_eligible) {
       return {
         providerId: provider.id,
@@ -55,23 +50,12 @@ export const calculatePlacement = (inputs: EngineInputs): EngineOutput[] => {
       };
     }
 
-    // 2. Normalized Compute Calculation
     let hourlyRatePerGPU = provider.unit_rate_gpu_hr;
 
     if (provider.type === 'private') {
-      /**
-       * PRIVATE CLOUD LOGIC:
-       * - Strip the 20% baseline from the JSON rate
-       * - Apply the user-defined OpEx Adder
-       * - Fixed cost model (CapEx): 100% cost regardless of duty cycle
-       */
       const rawAmortized = hourlyRatePerGPU / 1.20;
       hourlyRatePerGPU = rawAmortized * (1 + inputs.opexAdder);
     } else {
-      /**
-       * PUBLIC/SPECIALIZED LOGIC:
-       * - Scales linearly with Duty Cycle (Usage)
-       */
       hourlyRatePerGPU = hourlyRatePerGPU * inputs.dutyCycle;
     }
 
@@ -79,12 +63,10 @@ export const calculatePlacement = (inputs: EngineInputs): EngineOutput[] => {
     const egressTax = inputs.datasetSizeGB * provider.egress_gb;
     const totalMonthlyTCO = monthlyCompute + egressTax;
 
-    // 3. Token TCO (Cost per 1M Tokens)
     const tokenTCO = inputs.monthlyTokensMillions > 0 
       ? totalMonthlyTCO / inputs.monthlyTokensMillions 
       : 0;
 
-    // 4. Gravity Score & Display Logic
     const gravityScore = monthlyCompute > 0 ? egressTax / monthlyCompute : 0;
     
     let gravityDisplay = `${(gravityScore * 100).toFixed(1)}%`;
@@ -107,16 +89,12 @@ export const calculatePlacement = (inputs: EngineInputs): EngineOutput[] => {
   });
 };
 
-/**
- * Strategic Path Logic
- * Returns the "Rack2Cloud" style verdict for the top recommendation
- */
 export const getVerdict = (output: EngineOutput, inputs: EngineInputs) => {
   if (output.gravityScore > 0.5) {
     return {
       verdict: "Critical Gravity / Stay Put",
       reasoning: `Your Egress Tax ($${output.egressTax.toLocaleString()}) exceeds 50% of your compute cost. The friction of moving this dataset makes external placement irrational.`,
-      tip: "Architecturally, you are 'locked' by data volume. Consider repatriation or staying with your current primary data provider to avoid the egress tax."
+      tip: "Architecturally, you are locked by data volume. Consider repatriation or staying with your current primary data provider to avoid the egress tax."
     };
   }
 

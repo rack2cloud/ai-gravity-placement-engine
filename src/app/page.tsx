@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { calculatePlacement, getVerdict, EngineInputs } from '@/lib/engine';
 import providersData from '@/data/providers.json';
-import { Info, Gauge, Zap, Database, ShieldAlert, Binary } from 'lucide-react';
+import { Gauge, Zap, Database, ShieldAlert, Activity } from 'lucide-react';
 
 const RC_BLUE = '#1DABDD';
 const RC_NAVY = '#0F172A';
@@ -30,13 +30,14 @@ export default function GravityEngine() {
     <main className="h-screen overflow-hidden text-slate-100 flex flex-col font-sans" style={{ backgroundColor: RC_NAVY }}>
       
       {/* HEADER */}
-      <header className="px-6 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 z-50">
+      <header className="px-6 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 z-50 shadow-md">
         <div className="flex items-center gap-4">
           <Image 
             src="/images/rack2cloud-logo-300x99.jpg" 
             alt="RACK2CLOUD"
             width={180} height={60}
             priority
+            style={{ height: 'auto' }}
             className="object-contain"
           />
           <div className="h-8 w-px bg-slate-700" />
@@ -44,9 +45,9 @@ export default function GravityEngine() {
         </div>
         
         <div className="flex gap-3 items-center bg-slate-800/50 px-3 py-1 rounded border border-slate-700">
-           <Binary className="w-4 h-4 text-blue-400" />
+           <Activity className="w-4 h-4 text-blue-400" />
            <div className="text-[9px] uppercase tracking-tighter leading-tight">
-              <p className="font-bold text-slate-200">Llama 3 70B BF16</p>
+              <p className="font-bold text-slate-200 uppercase">Llama 3 70B BF16</p>
               <p className="text-slate-500 font-medium">145GB VRAM Locked</p>
            </div>
         </div>
@@ -120,7 +121,7 @@ export default function GravityEngine() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-7 relative overflow-hidden">
             <div className="relative z-10 grid grid-cols-[1fr,280px] items-start gap-10">
               <div className="space-y-5">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400">Architect&apos;s Verdict</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 italic">Architect's Verdict</span>
                 <h2 className="text-4xl font-bold text-white tracking-tighter uppercase leading-none">{winnerProvider?.name}</h2>
                 <div className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2">
                   <Gauge className="w-3 h-3" /> {winnerVerdict.verdict}
@@ -143,13 +144,8 @@ export default function GravityEngine() {
               <div className="flex flex-col items-end justify-center border-l border-slate-800 pl-10 text-right">
                 <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Token TCO</span>
                 <div className="text-6xl font-mono text-green-400 font-bold leading-none tracking-tighter">${recommendation.tokenTCO.toFixed(2)}</div>
-                <div className="text-slate-400 text-[11px] font-mono mt-4 font-bold tracking-tight">MONTHLY: ${recommendation.totalMonthlyTCO.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                <div className="text-slate-400 text-[11px] font-mono mt-4 font-bold tracking-tight uppercase">Monthly: ${recommendation.totalMonthlyTCO.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
               </div>
-            </div>
-
-            {/* WATERMARK */}
-            <div className="absolute -right-12 -bottom-12 opacity-[0.05] pointer-events-none">
-               <Image src="/images/Rack2Cloud_icon.jpg" alt="" width={260} height={260} />
             </div>
           </div>
 
