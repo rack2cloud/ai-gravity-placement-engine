@@ -1,0 +1,63 @@
+{
+  "benchmarks": {
+    "model": "Llama 3 70B",
+    "precision": "BF16",
+    "vram_required_gb": 145
+  },
+  "providers": [
+    {
+      "id": "aws_p5",
+      "name": "AWS (p5.48xlarge)",
+      "unit_rate_gpu_hr": 3.93,
+      "egress_gb": 0.09,
+      "is_sovereign_eligible": true,
+      "type": "public",
+      "footnote": "Standard On-Demand rate (US-East-1). Includes UltraCluster InfiniBand-equivalent fabric."
+    },
+    {
+      "id": "gcp_a3",
+      "name": "GCP (A3-High)",
+      "unit_rate_gpu_hr": 3.00,
+      "egress_gb": 0.12,
+      "is_sovereign_eligible": true,
+      "type": "public",
+      "footnote": "Reflects mid-2025 price reduction on A3 on-demand. Spot pricing (~40% reduction) excluded for BF16 steady-state consistency."
+    },
+    {
+      "id": "coreweave_h100",
+      "name": "CoreWeave HGX",
+      "unit_rate_gpu_hr": 6.16,
+      "egress_gb": 0.01,
+      "is_sovereign_eligible": false,
+      "type": "specialized",
+      "footnote": "Premium bare-metal HGX with dedicated InfiniBand fabric. No multi-tenant contention. Rate reflects reserved cluster pricing."
+    },
+    {
+      "id": "lambda_h100",
+      "name": "Lambda H100",
+      "unit_rate_gpu_hr": 2.99,
+      "egress_gb": 0.00,
+      "is_sovereign_eligible": false,
+      "type": "specialized",
+      "footnote": "No published egress fee—bandwidth caps apply at scale. Production throttling documented for TB-scale transfers."
+    },
+    {
+      "id": "nutanix_h100",
+      "name": "Nutanix AHV (H100)",
+      "unit_rate_gpu_hr": 2.15,
+      "egress_gb": 0.00,
+      "is_sovereign_eligible": true,
+      "type": "private",
+      "footnote": "Includes AOS/AHV licenses. Rate reflects 36-mo CapEx amortization + baseline 20% OpEx Adder."
+    },
+    {
+      "id": "cisco_ucs_h100",
+      "name": "Cisco UCS M7 (H100)",
+      "unit_rate_gpu_hr": 2.45,
+      "egress_gb": 0.00,
+      "is_sovereign_eligible": true,
+      "type": "private",
+      "footnote": "High-density thermal optimized C240 M7 configuration. Rate reflects 36-mo CapEx amortization + baseline 20% OpEx Adder."
+    }
+  ]
+}

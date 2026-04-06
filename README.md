@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Gravity & Placement Engine
 
-## Getting Started
+A strategic decision engine for AI workload economics under constraints. 
+Developed for [Rack2Cloud.com](https://www.rack2cloud.com).
 
-First, run the development server:
+## 🎯 The Purpose
+The **AI Gravity & Placement Engine** moves beyond simple cloud calculators. It models the physical and fiscal "weight" of data (Gravity) against the total cost of ownership (TCO) for high-performance inference.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠️ The Benchmark: BF16 Integrity
+To ensure an honest comparison, all provider data is locked to the following benchmark:
+* **Model:** Llama 3 70B
+* **Precision:** **BF16 (Full Precision)**
+* **VRAM Requirement:** ~145GB (Weight + KV Cache)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*Note: We do not use INT4 or FP8 quantization for this engine, as they produce misleadingly low hardware footprints that don't reflect enterprise-grade reasoning accuracy.*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧬 The Logic: Gravity ($G$)
+We measure "Data Gravity" as the ratio of data movement cost (Egress) to monthly compute cost:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+$$G = \frac{\text{Dataset Size (GB)} \times \text{Egress Rate}}{\text{Monthly Compute Cost}}$$
 
-## Learn More
+- **$G > 0.5$:** Critical Gravity. Data movement costs exceed 50% of compute. Placement is restricted to the data's current location or repatriation.
 
-To learn more about Next.js, take a look at the following resources:
+## ⚙️ Features
+- **OpEx Adder Slider:** Adjust for power, cooling, and facility overhead (Default 20%).
+- **Duty Cycle Toggle:** Compare 24/7 Steady-State Inference vs. 20% Burst Training.
+- **Sovereign Gate:** Hard-filter for regulated industries (excluding specialized providers).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
