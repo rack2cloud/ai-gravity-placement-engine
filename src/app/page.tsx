@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { calculatePlacement, getVerdict, EngineInputs } from '@/lib/engine';
 import providersData from '@/data/providers.json';
-import { Gauge, Zap, Database, ShieldAlert, Activity } from 'lucide-react';
+import { Gauge, Zap, Database, ShieldAlert, Activity, ThermometerSun } from 'lucide-react';
 
 const RC_BLUE = '#1DABDD';
 const RC_NAVY = '#0F172A';
@@ -16,6 +16,9 @@ export default function GravityEngine() {
     dutyCycle: 1.0,
     opexAdder: 0.20,
     complianceMode: false,
+    isLegacyFacility: false,
+    customGpuHr: undefined,
+    customEgressGb: undefined,
   });
 
   const results = useMemo(() => calculatePlacement(inputs), [inputs]);
@@ -23,14 +26,16 @@ export default function GravityEngine() {
     .filter(r => r.isEligible)
     .sort((a, b) => a.totalMonthlyTCO - b.totalMonthlyTCO)[0];
   
-  const winnerProvider = providersData.providers.find(p => p.id === recommendation.providerId);
+  const winnerProvider = recommendation.providerId === 'custom_byor' 
+    ? { name: 'Marketplace (BYOR)' } 
+    : providersData.providers.find(p => p.id === recommendation.providerId);
+    
   const winnerVerdict = getVerdict(recommendation, inputs);
 
   return (
-    // Changed h-screen overflow-hidden to min-h-screen for mobile scrolling
     <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans" style={{ backgroundColor: RC_NAVY }}>
       
-      {/* HEADER: Responsive padding and logo size */}
+      {/* HEADER */}
       <header className="px-4 md:px-6 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between bg-slate-900/90 z-50 shadow-md gap-4">
         <div className="flex items-center gap-3">
           <Image 
@@ -54,10 +59,10 @@ export default function GravityEngine() {
         </div>
       </header>
 
-      {/* MAIN CONTENT: flex-col for mobile, flex-row for desktop */}
+      {/* MAIN CONTENT */}
       <div className="flex flex-col md:flex-row flex-1 md:overflow-hidden">
         
-        {/* SIDEBAR: Becomes a top-section on mobile */}
+        {/* SIDEBAR */}
         <aside className="w-full md:w-[320px] border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40 p-6 flex flex-col gap-6 md:overflow-y-auto">
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 flex items-center gap-2">
             <Database className="w-3 h-3" /> System Variables
@@ -90,19 +95,49 @@ export default function GravityEngine() {
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                <span>OpEx Adder</span>
-                <span className="text-blue-400 font-mono text-sm font-bold">{(inputs.opexAdder * 100).toFixed(0)}%</span>
+            {/* LEGACY TOGGLE & OPEX SLIDER */}
+            <div className="space-y-4">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex items-start">
+                  <input 
+                    type="checkbox" 
+                    className="peer sr-only"
+                    checked={inputs.isLegacyFacility}
+                    onChange={(e) => setInputs({...inputs, isLegacyFacility: e.target.checked})}
+                  />
+                  <div className="w-4 h-4 border border-slate-600 rounded bg-slate-900 peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all flex items-center justify-center mt-0.5">
+                    {inputs.isLegacyFacility && <ThermometerSun className="w-3 h-3 text-white" />}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors">
+                    Legacy Data Center (Pre-2018)
+                  </span>
+                  <span className="text-[9px] text-slate-500 font-medium mt-0.5">
+                    +15% Cooling & PUE Tax
+                  </span>
+                </div>
+              </label>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className={inputs.isLegacyFacility ? "text-blue-400" : "text-slate-400"}>
+                    OpEx Adder {inputs.isLegacyFacility && inputs.opexAdder < 0.35 && "— (Floor Applied)"}
+                  </span>
+                  <span className="text-blue-400 font-mono text-sm font-bold">
+                    {((inputs.isLegacyFacility ? Math.max(inputs.opexAdder, 0.35) : inputs.opexAdder) * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <input type="range" min="0.1" max="0.5" step="0.05"
+                  style={{ accentColor: RC_BLUE }}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                  value={inputs.opexAdder}
+                  onChange={(e) => setInputs({...inputs, opexAdder: parseFloat(e.target.value)})}
+                />
               </div>
-              <input type="range" min="0.1" max="0.5" step="0.05"
-                style={{ accentColor: RC_BLUE }}
-                className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
-                value={inputs.opexAdder}
-                onChange={(e) => setInputs({...inputs, opexAdder: parseFloat(e.target.value)})}
-              />
             </div>
 
+            {/* COMPLIANCE TOGGLE */}
             <div className="pt-4 border-t border-slate-800 flex items-center justify-between sm:col-span-2 md:col-span-1">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sovereign Mode</span>
               <button 
@@ -112,13 +147,43 @@ export default function GravityEngine() {
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${inputs.complianceMode ? 'left-5.5' : 'left-0.5'}`} />
               </button>
             </div>
+
+            {/* BYOR MARKETPLACE INPUTS */}
+            <div className="pt-4 border-t border-slate-800 space-y-4 sm:col-span-2 md:col-span-1">
+              <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Marketplace (BYOR)</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold text-slate-400">GPU $/HR</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    onChange={(e) => setInputs({...inputs, customGpuHr: parseFloat(e.target.value) || undefined})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold text-slate-400">EGRESS $/GB</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    onChange={(e) => setInputs({...inputs, customEgressGb: parseFloat(e.target.value) || undefined})}
+                  />
+                </div>
+              </div>
+            </div>
+
           </div>
         </aside>
 
-        {/* DASHBOARD: Scrollable content area */}
+        {/* DASHBOARD */}
         <section className="flex-1 p-4 md:p-6 flex flex-col gap-6 md:overflow-y-auto">
           
-          {/* ARCHITECT VERDICT HERO: Stacks vertically on small screens */}
+          {/* ARCHITECT VERDICT HERO */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 md:p-7 relative overflow-hidden">
             <div className="relative z-10 flex flex-col lg:grid lg:grid-cols-[1fr,280px] items-start gap-8">
               <div className="space-y-5 w-full">
@@ -142,7 +207,6 @@ export default function GravityEngine() {
                 </div>
               </div>
 
-              {/* Pricing section on mobile sits below reasoning */}
               <div className="w-full lg:w-auto flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center border-t lg:border-t-0 lg:border-l border-slate-800 pt-6 lg:pt-0 lg:pl-10 text-right">
                 <div className="text-left lg:text-right">
                   <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1 block">Token TCO</span>
@@ -155,7 +219,7 @@ export default function GravityEngine() {
             </div>
           </div>
 
-          {/* TABLE: Horizontal scroll for mobile */}
+          {/* TABLE */}
           <div className="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-slate-300 min-w-[600px]">
@@ -168,14 +232,18 @@ export default function GravityEngine() {
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {results.map((res) => {
-                    const p = providersData.providers.find(prov => prov.id === res.providerId);
+                    const name = res.providerId === 'custom_byor' 
+                      ? 'Marketplace (BYOR)' 
+                      : providersData.providers.find(prov => prov.id === res.providerId)?.name;
+                    
                     if (!res.isEligible) return null;
                     const isWinner = res.providerId === recommendation.providerId;
+                    
                     return (
                       <tr key={res.providerId} className={`transition-all ${isWinner ? 'bg-blue-500/10' : 'hover:bg-slate-800/40'}`}>
                         <td className="px-6 py-3 font-bold text-slate-100 flex items-center gap-3">
                           {isWinner && <Zap className="w-3 h-3 text-green-400 fill-green-400" />}
-                          {p?.name}
+                          {name}
                         </td>
                         <td className={`px-6 py-3 text-right font-mono ${res.gravityScore > 0.5 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
                           {res.gravityDisplay}
